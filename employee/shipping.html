@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Warehouse Shipping Interface</title>
+    <link rel="stylesheet" href="employee.css">
+    <style>
+        /* Styles for the modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        //check if user is authenticated 
+        if (sessionStorage.getItem('AuthenticatedS') === null) {
+          window.location.href = "denied.html";
+        }
+        else {
+        //The user is authenticated
+        alert("password is valid")
+        }
+      </script>
+</head>
+
+<body style="background-color: #F0F8FF">
+    <h1 class="textCenter">Warehouse Shipping Interface</h1>
+
+
+    <div class="textCenter">
+        <h2>Show Orders</h2>
+        <button class="button" onclick="showOrders()">Show All Orders</button>
+
+        <div class="textCenter" id="orderList">
+            <!-- Order list will be displayed here -->
+        </div>
+    </div>
+
+    <div class="textCenter">
+        <h2>Order Details</h2>
+        <label for="orderId">Enter Order ID:</label>
+        <input type="text" id="orderId" placeholder="Enter Order ID">
+        <button class="button" onclick="retrieveOrder()">Retrieve Order</button>
+
+        <div class="textCenter" id="orderDetails">
+            <!-- Order details will be displayed here -->
+        </div>
+    </div>
+
+    
+
+
+    <div class="textCenter">
+        <h2>Add Invoice and Shipping Label</h2>
+        <!-- same stuff invoice and shipping -->
+        <button class="button" onclick="addInvoiceAndLabel()">Add Invoice & Shipping Label</button>
+    </div>
+
+    <div class="textCenter">
+        <h2>Complete Order</h2>
+        <button class="button" onclick="completeOrder()">Complete Order</button>
+    </div>
+   
+   
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="invoiceDetails"></div>
+        </div>
+    </div>
+
+
+    <script>
+        //db table with test data 
+      
+
+        function showOrders() {
+            const orderListDiv = document.getElementById('orderList');
+            const httpReq = new XMLHttpRequest();
+            httpReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    const orders = JSON.parse(this.responseText);
+                    let orderListHTML = '<ul>';
+                    orders.forEach(order => {
+                        orderListHTML += `<li>Order ID: ${order.OrderNum}, Customer: ${order.Customer}, Shipped: ${order.Shipped}</li>`;
+                    });
+                    orderListHTML += '</ul>';
+                    orderListDiv.innerHTML = orderListHTML;
+                }
+            };
+
+            httpReq.open("GET", "/showorders");
+            httpReq.send();
+        }
+        function retrieveOrder() {
+    const orderIdInput = document.getElementById('orderId');
+    const orderId = parseInt(orderIdInput.value);
+
+    if (isNaN(orderId)) {
+        alert('Please enter a valid Order ID.');
+        return;
+    }
+
+    const httpReq = new XMLHttpRequest();
+    httpReq.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                const orderData = JSON.parse(this.responseText);
+                if (orderData) {
+                    displayOrderDetails(orderData);
+                } else {
+                    alert('Order not found!');
+                }
+            } else {
+                alert('Error fetching order data.');
+            }
+        }
+    };
+
+    httpReq.open("GET", `/getorder?orderId=${orderId}`);
+    httpReq.send();
+}
+
+        function displayOrderDetails(order) {
+            const orderDetailsDiv = document.getElementById('orderDetails');
+            const items = JSON.parse(order.Items);
+            let itemsList = '<ul>';
+            items.forEach(item => {
+                itemsList += `<li>Part Number: ${item.partnum}, Quantity: ${item.qty}, Price: ${item.price}, Weight: ${item.wt}</li>`;
+            });
+            itemsList += '</ul>';
+ 
+            const orderDetailsHTML = `
+                <p><strong>Order ID:</strong> ${order.OrderNum}</p>
+                <p><strong>Customer:</strong> ${order.Customer}</p>
+                <p><strong>Price:</strong> $${orderData.Total.toFixed(2)}</p> 
+                <p><strong>Items:</strong></p>
+                ${itemsList}
+            `;
+            orderDetailsDiv.innerHTML = orderDetailsHTML;
+        }
+        function addInvoiceAndLabel() {
+    const invoiceModal = document.getElementById('invoiceModal');
+    const invoiceDetailsDiv = document.getElementById('invoiceDetails');
+
+    // Check if Order ID is valid
+    const orderIdInput = document.getElementById('orderId');
+    const orderId = parseInt(orderIdInput.value);
+    if (isNaN(orderId)) {
+        alert('Please enter a valid Order ID.');
+        return;
+    }
+
+    const httpReq = new XMLHttpRequest();
+    httpReq.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                const orderData = JSON.parse(this.responseText);
+                if (orderData) {
+                    // Generate the invoice details HTML here based on the orderData
+                    const invoiceHTML = `
+                        <h2>Invoice Details</h2>
+                        <p><strong>Order ID:</strong> ${orderData.OrderNum}</p>
+                        <p><strong>Customer:</strong> ${orderData.Customer}</p>
+                        <p><strong>Price:</strong> $${orderData.Total.toFixed(2)}</p>
+                        <!-- Include other relevant details here -->
+                    `;
+
+                    invoiceDetailsDiv.innerHTML = invoiceHTML;
+                    invoiceModal.style.display = 'block';
+                } else {
+                    alert('Order not found!');
+                }
+            } else {
+                alert('Error fetching order data.');
+            }
+        }
+    };
+
+    httpReq.open("GET", `/getorder?orderId=${orderId}`);
+    httpReq.send();
+}
+
+
+
+
+        function closeModal() {
+            const invoiceModal = document.getElementById('invoiceModal');
+            invoiceModal.style.display = 'none';
+        }
+
+
+        function completeOrder() {
+    var orderIdInput = document.getElementById('orderId');
+    var orderId = parseInt(orderIdInput.value);
+
+    const order = { OrderNum: orderId };
+    const orderJSON = JSON.stringify(order);
+
+    const statusMessage = document.getElementById('statusMessage');
+
+    const httpReq = new XMLHttpRequest();
+    httpReq.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                const data = JSON.parse(this.responseText);
+
+                if (data.success) {
+                    statusMessage.innerHTML = 'Order completed and shipped successfully';
+
+                    // Send email notification using XMLHttpRequest
+                    const emailReq = new XMLHttpRequest();
+                    emailReq.onreadystatechange = function() {
+                        if (this.readyState == 4) {
+                            if (this.status == 200) {
+                                console.log('Email sent successfully');
+                            } else {
+                                console.error('Error sending email');
+                            }
+                        }
+                    };
+
+                    // Adjust the endpoint URL for sending email
+                    emailReq.open("POST", "/sendemail");
+                    emailReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                    emailReq.send(orderJSON);
+                } else if (data.error) {
+                    statusMessage.innerHTML = 'Error completing order';
+                    console.log(data.error);
+                }
+            } else {
+                console.error(this.statusText);
+            }
+        }
+    };
+
+    // Adjust the endpoint URL for completing order
+    httpReq.open("POST", "/shiporder");
+    httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    httpReq.send(orderJSON);
+}
+
+  
+
+
+        
+    </script>
+</body>
+</html>

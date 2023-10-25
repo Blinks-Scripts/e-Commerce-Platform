@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <head>
+    <style>
+
+.vertical-menu {
+  width: 80%;
+  height: 400px;
+  overflow-y: auto;
+  overflow-x: auto;
+  overflow-wrap: none;
+}
+
+.vertical-menu a {
+  background-color: #eee;
+  color: black; 
+  display: block; 
+  padding: 12px; 
+  text-decoration: none; 
+}
+
+.vertical-menu a:hover {
+  background-color: #ccc; /
+}
+
+.vertical-menu a.active {
+  background-color: lightgreen; 
+  color: white;
+}
+
+/* Confirmation modal*/
+  /* background */
+  .modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  }
+
+  /* The modal content */
+  .modal-content {
+    background-color: rgba(144,255,144,0.85);
+    margin: 10% auto; 
+    padding: 20px;
+    border: 6px solid #61ebfa;
+    width: 80%;
+  }
+
+  /* The modal header */
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* The close button */
+  .close {
+    color: slategray;
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    font-weight: bolder;
+    cursor: pointer;
+  }
+    </style>
+  </head>
+  
+</head>
+<script>
+  /*
+  / Test code
+  /
+  function testLegacy() {
+    fetch('/showusers')
+    .then((response) => {
+      if (response.ok) {
+        return response.text();
+      } else {
+        throw new Error('Request failed');
+      }
+    })
+    .then((data) => {
+      console.log(data);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
+  */
+ 
+  function retrieveAllOrders() {
+    const httpReq = new XMLHttpRequest();
+    httpReq.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      // parse the response data
+      const data = JSON.parse(this.responseText);
+      console.log(data);
+      console.log(data[0].Customer);
+      // Create a table element
+      var table = document.createElement("table");
+
+
+      var columnHeaders = document.createElement("tr");
+        for (var key in data[0] ) {
+          var cell = document.createElement("td");
+          cell.textContent = '| ' + key + ' |';
+          columnHeaders.appendChild(cell);
+        }
+        table.appendChild(columnHeaders);
+
+      // Loop through the data and create table rows and cells
+      for (var i = 0; i < data.length; i++) {
+        var row = document.createElement("tr");
+        // link a submission button to each order 
+        var submit = document.createElement("button");
+        // should set the OrderNum of the JSON object as the request data
+        submit.setAttribute( "id", data[i].OrderNum);
+        // add "onclick" functionality to the buttons being constructed and connect
+        // button to the shipOrder function as the callback function
+        // Use the onclick attribute to call shipOrder with the order number
+        submit.setAttribute("onclick", "shipOrder(" + data[i].OrderNum + ")");
+        submit.textContent = "Mark Order " + data[i].OrderNum + " as shipped";
+        if ( data[i].Shipped ) {
+          submit.setAttribute("disabled","true");
+        }
+        for (var key in data[i] ) {
+          var cell = document.createElement("td");
+          cell.textContent = '| ' + data[i][key] + ' |';
+          row.appendChild(cell);
+        }
+        row.appendChild(submit);
+        table.appendChild(row);
+      }
+
+      // Append the table to the HTML document,
+      // remove and replace any data that was previously there
+      let tableHTML = document.getElementById('table');
+      // if data has already been displayed in the table element
+      // remove the child of the table element (the <table>)
+      if ( tableHTML.firstElementChild ) {
+        tableHTML.removeChild(tableHTML.firstElementChild);
+      }
+      // put the <table> and data into the <div id='table'> element
+      document.getElementById('table').appendChild(table);
+      }
+    }
+    httpReq.open("GET", "/showorders");
+    httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    httpReq.send('');
+  }
+
+  function shipOrder( ord ) {
+        //send ord to special shiporder page;
+        const httpReq = new XMLHttpRequest();
+        httpReq.open("POST", "/shiporder");
+        httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        // encapsulated into JSON for good reason, I promise
+        orderNum = { "OrderNum": ord };
+        const OrderToShip = JSON.stringify(orderNum);
+        httpReq.send(OrderToShip);
+        //update the view to show the order shipped
+        retrieveAllOrders();
+      }
+
+  function sqlRequest() {
+    var txtBox1 = document.getElementById('inp01');
+    var txtBox2 = document.getElementById('inp02');
+    var usrnme = txtBox1.value;
+    var psswrd = txtBox2.value;
+    const newUser = { username: usrnme, password: psswrd };
+    const newUserJSON = JSON.stringify(newUser);
+
+    const test = document.getElementById('p02');
+      test.innerHTML = "test works";
+
+    const httpReq = new XMLHttpRequest();
+    httpReq.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      // parse the response data
+      const data = JSON.parse(this.responseText);
+
+      // do something with data
+
+      const welcome = document.getElementById('01');
+      if ( data.success ) {
+        var successMsg = 'new user ' + usrnme + ' added successfully';
+      console.log( successMsg );
+      welcome.innerHTML = successMsg + '<br>';
+      } else if ( data.error ) {
+        welcome.innerHTML = "error";
+        console.log( data.error );
+      }
+    } else {
+      // handle error
+      console.error(this.statusText);
+    }
+    };
+    httpReq.open("POST", "/adduser");
+    httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    httpReq.send(newUserJSON);
+  }
+  
+function Part(partNum, qty) {
+    this.PartNum = partNum;
+    this.Qty = qty;
+}
+
+function Cart() {
+    this.Items = [];
+    this.AddItem = function(item){
+        for ( cartItem in this.Items ) {
+            if ( this.Items[cartItem].PartNum == item.PartNum ) {
+                this.Items[cartItem].Qty += item.Qty;
+                return;
+            }
+        }
+        this.Items.push(item);
+    };
+}
+
+function UserSession() {
+  this.userCart = new Cart();
+}
+
+var user = new UserSession();
+
+function addToCart(part) {
+  var qtyEl = document.getElementById('q' + part);
+  var qty = +qtyEl.value; // turn text to integer with +<string>
+  const item = new Part( part, qty );
+  user.userCart.AddItem(item);
+}
+
+function enableCCDetail() {
+  var els = document.getElementsByClassName("ccauth");
+  for ( var i = 0; i < els.length; i++ ) {
+    els[i].disabled = false;
+  }
+}
+
+function sendCC(amt, cartString) {
+  console.log("testing cartstring: " + cartString );
+  var cc = document.getElementById("inputcc").value;
+  var name = document.getElementById("inputname").value;
+  var exp = document.getElementById("inputexp").value;
+  var shipName = document.getElementById("addrName").value;
+  var addr = document.getElementById("addrStreet-Address").value;
+  var city = document.getElementById("addrCity").value;
+  var state = document.getElementById("addrState").value;
+  var zip = document.getElementById("addrZipcode").value;
+  var regexDate = /^[0-1]\d\/20[2-3][0-9]$/ ; // match mm/yyyy format
+  var regexName = /^[A-Za-z]*(?:\s+[A-Za-z]*)*$/ ; // match any amount of words separated by whitespace
+  try {
+    if ( cc.length < 16 ) {
+      throw(err="not a valid CC number");
+    }
+    if ( regexDate.test(exp) ) {
+       console.log("cc exp in mostly correct format");
+    } else {
+      throw(err="bad exp date");
+    }
+    if ( regexName.test(name) ) {
+      console.log("name in correct format");
+    } else {
+      throw(err="bad name format, remove special characters");
+    }
+
+    var authObj = {"amt":amt,"cc":cc,"name":name,"exp":exp};
+    var shipObj = {"name":shipName,"addr":addr,"city":city,"state":state,"zip":zip };
+    var packet = {"auth":authObj,"ship":shipObj,"cart":cartString};
+    var reqBody = JSON.stringify(packet);
+
+    
+    var ccAuthReq = new XMLHttpRequest();
+    ccAuthReq.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        var data = JSON.parse(this.responseText);
+        console.log("cc authorization response received");
+        console.log(data["auth"]);
+      } else if (this.error) {
+        console.log("something went wrong receiving cc authorization confirmation");
+      }
+    }
+
+    ccAuthReq.open("POST","/ccauth");
+    ccAuthReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    console.log(reqBody + "\n ^^^sent");
+    ccAuthReq.send(reqBody);
+  } 
+  catch {
+    console.log(err);
+    alert(err);
+  }
+
+  }
+
+function getConfirmation(data) {
+  // Get the modal body element
+  let modal = document.getElementById("modal");
+
+  var subtotal = data.total;
+  var shipping = data.shipping;
+  var total = +subtotal + +shipping;
+
+  let html = "";
+  html += "<ul>";
+  
+  // make an itemized list of quantities
+  // missing individual prices - can grab from this same page -
+  //       document.getElementById("p"+PartNum) .get third child
+  for (let i = 0; i < data.cart.length; i++) {
+    html += "<li>" + data.cart[i].Qty + " x " + 
+      document.getElementById("description"+data.cart[i].PartNum).textContent + "  @  " + 
+      document.getElementById("price"+data.cart[i].PartNum).textContent + "</li>";
+  }
+  html += "</ul>";
+  // order subtotal
+  html += "<p>Subtotal: $" + subtotal + "</p>";
+  // shipping fee
+  html += "<p>Shipping fee: $" + shipping + "</p>";
+  // order total
+  html += "<p>Total: $" + total + "</p>";
+
+  
+  // put the html into the modal body
+  modalText = document.getElementById("modalText");
+  modalText.innerHTML = html;
+
+  var ccform = document.getElementById("ccform");
+  var form = document.createElement("form");
+  form.setAttribute("method","POST");
+  form.setAttribute("target","/ccauth");
+  form.setAttribute("action","");
+
+
+  // confirm order total to enable cc input fields
+  // make button
+  btn = document.createElement("button");
+  btn.setAttribute("id","confirmtotal");
+  btn.setAttribute("onclick","enableCCDetail()");
+  btn.innerHTML= "Confirm total";
+  modalText.append(btn);
+
+
+  // create cc detail fields
+  var CCfields = ["cc", "name", "exp"];
+  for ( field of CCfields ) {
+    var rowText = document.createElement("p");
+    rowText.innerHTML = field + "<br>";
+
+    var inpField = document.createElement("input");
+    inpField.setAttribute("id", "input"+field );
+    inpField.setAttribute("name", field );
+    // ccauth class elements are activated after total confirmation
+    inpField.setAttribute("class","ccauth");
+    inpField.setAttribute("type","text");
+    inpField.setAttribute("disabled",true);
+    form.appendChild(rowText);
+    rowText.appendChild(inpField);
+  }
+  var addrFields = ["Name", "Street-Address", "City", "State", "Zipcode", "email"];
+  for ( field of addrFields ) {
+    var rowText = document.createElement("p");
+    rowText.innerHTML = field + "<br>";
+    var addrInput = document.createElement("input");
+    addrInput.setAttribute("id","addr"+field );
+    addrInput.setAttribute("type","text");
+    addrInput.setAttribute("class","ccauth");
+    rowText.appendChild(addrInput);
+    form.appendChild(rowText);
+    
+  }
+
+
+  // create submit button for the order
+  var submitBtn = document.createElement("button");
+  submitBtn.setAttribute("disabled","true");
+  // set class so it can be enabled by the total confirmation
+  submitBtn.setAttribute("class","ccauth");
+  submitBtn.innerHTML = "Submit order";
+  submitBtn.setAttribute("onclick","sendCC(" + total + ", " + JSON.stringify(data.cart)+ ")");
+
+  ccform.appendChild(form);
+  ccform.append(submitBtn);
+
+  // force good input for cc#
+  var cc = document.getElementById("inputcc"); 
+  // anytime there's input, get rid of non-digits in the field
+  cc.addEventListener("input", function() { 
+  // replace any non-digit characters with an empty string 
+  this.value = this.value.replace(/\D/g, ""); 
+  // limit the length to 16 characters 
+  if (this.value.length > 16) { 
+    this.value = this.value.substring(0, 16); 
+  }
+
+  });
+
+  modal.style.display = "block";
+}
+
+function sendCart() {
+  var cart = user.userCart.Items;
+  var c = JSON.stringify(cart);
+  const httpReq = new XMLHttpRequest();
+  httpReq.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        // parse the response data
+        const data = JSON.parse(this.responseText);
+        // reference
+        // data.total
+        // data.weight
+        // data.shipping = shipping fee
+        // data.cart = [{PartNum: 0, Qty: #},{...}]
+        // data.cart[0].PartNum = 0
+        // part name = `document.getElementById("number"+data.cart[0].PartNum).textContent
+
+        console.log("subtotal: " + data.total);
+        console.log("total order weight: " + data.weight + "\n" +
+                    "shipping fee: " + data.shipping);
+        console.log("total: " + (+data.total + +data.shipping) );
+        console.log("requested cart: " + JSON.stringify(cart) );
+        console.log("ordered cart: " + JSON.stringify(data.cart) );
+
+        //user.userCart.Items = data.cart;
+        getConfirmation(data);
+      }
+  }
+  httpReq.open("POST", "/ordercart");
+  httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  httpReq.send(c);
+}
+
+function displayCat() {
+    const httpReq = new XMLHttpRequest();
+    httpReq.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            // parse the response data
+            const data = JSON.parse(this.responseText);
+            console.log(data[0]);
+            //console.log(data);
+            //console.log(data[0].Customer);
+            // Create a table element
+            var table = document.createElement("table");
+
+            // Loop through the data and create table rows and cells
+            var catHeader = ["Part Number", "Part Description", "Part Price", "Part Weight", "Part Image"];
+            var thead = document.createElement('thead');
+            thead.setAttribute("id","thead");
+            thead.setAttribute("class", "thead");
+
+            table.appendChild(thead);
+
+            for (var i=0; i<catHeader.length; i++) {
+                thead.appendChild(document.createElement("th")).
+                appendChild(document.createTextNode(catHeader[i]));
+            }
+
+            for (var i = 0; i < data.length; i++) {
+                var row = document.createElement("tr");
+                row.setAttribute("id","p" + data[i].number)
+                row.setAttribute("class","partrow");
+
+                //
+                // new
+                //
+                // link a submission button to each order 
+                var submit = document.createElement("button");
+                var qtyField = document.createElement("input");
+                qtyField.setAttribute("type", "number");
+                submit.setAttribute( "id", "p" + data[i].number );
+                qtyField.setAttribute( "id", "q" + data[i].number );
+                // add "onclick" functionality to the buttons being constructed and connect
+                // button to the shipOrder function as the callback function
+                // Use the onclick attribute to call shipOrder with the order number
+                submit.setAttribute("onclick", "addToCart(" + data[i]['number'] + ")");
+                submit.textContent = "Add to cart";
+                //
+                //
+
+                var track = 0;
+                for (var key in data[i] ) {
+                    var cell = document.createElement("td");
+                    if(track < 4) {
+                        cell.setAttribute("id", key + data[i].number );
+                        cell.textContent =  data[i][key] ;
+                        cell.style.border="1px solid blue";
+                    }
+                    else {
+                        var img = document.createElement('img');
+                        img.src = data[i][key];
+                        cell.appendChild(img);
+                        cell.style.border="1px solid blue";
+                    }
+                    row.appendChild(cell);
+                    row.appendChild(submit);
+                    row.appendChild(qtyField);
+                    track++; 
+                }
+                table.appendChild(row);
+            }
+            table.style.marginLeft="auto"
+            table.style.marginRight="auto"
+            // Append the table to the HTML document,
+            // remove and replace any data that was previously there
+            let tableHTML = document.getElementById('table');
+            // if data has already been displayed in the table element
+            // remove the child of the table element (the <table>)
+            //tableHTML.style.border="1px solid red";
+
+            if ( tableHTML.firstElementChild ) {
+                tableHTML.removeChild(tableHTML.firstElementChild);
+            }
+            // put the <table> and data into the <div id='table'> element
+            document.getElementById('table').appendChild(table);
+            var orderCart = document.createElement("button");
+            orderCart.setAttribute("id", "cartBtn");
+            orderCart.textContent = "Order Cart";
+            itemsJSON = JSON.stringify(user.userCart);
+            orderCart.setAttribute("onclick", "sendCart()");
+            document.getElementById('orderbtn').append(orderCart);
+            //style order button
+            orderCart.style.backgroundColor="#0000FF"
+            orderCart.style.border="none"
+            orderCart.style.color="white"
+            orderCart.style.padding="25px 42px"
+            orderCart.style.textAlign="center"
+            orderCart.style.textDecoration="none"
+            orderCart.style.display="inline-block"
+            orderCart.style.fontSize="16px"
+            orderCart.style.margin="auto"
+            orderCart.style.position = "absolute";
+            orderCart.style.left = "50%";
+            orderCart.style.transform = "translateX(-50%)";
+
+
+
+        } else {
+            throw(err);
+        }
+    }
+    httpReq.open("GET", "/showcatalog");
+    httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    httpReq.send('');
+
+}
+
+</script>
+<body style="background-color: #F0F8FF" onload="displayCat();">
+<br>
+<div class="vertical-menu">
+  <div id="table">
+  </div>
+</div>
+<div id="modal" class="modal">
+  <div id="modal-content" class="modal-content">
+    <span class="close">&times</span>
+    <p id="modalText"></p>
+    <div id="ccform">
+    </div>
+  </div>
+</div>
+<div id="orderbtn">
+</div>
+
+<script>
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+  // modal functions
+  // When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+</script>
+</body>
+</html>

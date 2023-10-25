@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <title>
+    CSCI467PartStore  
+    </title>
+    <head>
+      <style>
+        .buttonEmp {
+      background-color: #4CAF50; /* Green */
+      border: none;
+      color: white;
+      padding: 25px 42px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: auto;
+    }
+    .buttonUse {
+      background-color: #0000FF; /* Blue */
+      border: none;
+      color: white;
+      padding: 25px 42px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: auto;
+    }
+    .textCenter{
+      margin: auto;
+      text-align: center;
+      font-size: 48px;
+    }
+    div.form
+    {
+      display: block;
+      text-align: center;
+    }
+    form
+    {
+      border: 3px solid #73AD21;
+      display: inline-block;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+    .center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+    }
+      </style>
+    </head>
+    <body onload="buildPartsTable();">
+  
+    <h1 class="textCenter">Welcome To The CSCI467 Group 1A Partstore</h1><br>
+    <h2 class="textCenter">If You're A User Please Proceed To The User Page,<br> If You're An Employee Please Proceed To The Employee Page</h2><br>
+<body style="background-color: #F0F8FF">
+<script>
+  function buildPartsTable() {
+    console.log("sending...");
+    const httpReq = new XMLHttpRequest();
+    httpReq.onreadystatechange = function() {};
+    httpReq.open("GET", "/reconcile");
+    httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    httpReq.send('');
+    console.log("sent");
+  }
+</script>
+
+<div  class="center" id="form1">
+  <form action="/welcome" enctype="application/x-www-form-urlencoded" id="form1" method="get">
+    <input class="buttonUse" type="submit" value="Go To User's Page"><br>
+</form>
+</div>
+
+<!-- Add a button to go to employee.html -->
+<div class="center">
+<button class="buttonEmp" id="goToEmployeeButton">Go to Employee Page</button>
+</div>
+
+
+<script>
+  // Add event listener to the button
+  document.getElementById("goToEmployeeButton").addEventListener("click", function() {
+    window.location.href = "employee/employee.html";
+  });
+</script>
+
+</body>
+</html>

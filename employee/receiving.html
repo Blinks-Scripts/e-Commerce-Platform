@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="employee.css">
+        <title>Receiving</title>
+        <script>
+            //check if user is authenticated 
+            if (sessionStorage.getItem('AuthenticatedR') === null) {
+              window.location.href = "denied.html";
+            }
+            else {
+            //The user is authenticated
+            alert("password is valid")
+            }
+          </script>
+
+    </head>
+    <body style="background-color: #F0F8FF">
+        <h2 class="textCenter">Receiving Desk</h2>
+
+        <script>
+            function sqlRequest() {
+                var txtBox1 = document.getElementById('inp01');
+                var txtBox2 = document.getElementById('inp02');
+                var numordescr = txtBox1.value;
+                var qty = txtBox2.value;
+                const newInventory = { search: numordescr, quantity: qty };
+                const newInventoryJSON = JSON.stringify(newInventory);
+
+                const test = document.getElementById('p02');
+                test.innerHTML = "Inventory Added";
+
+                const httpReq = new XMLHttpRequest();
+                httpReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                // parse the response data
+                const data = JSON.parse(this.responseText);
+
+                // do something with data
+
+                const welcome = document.getElementById('01');
+                if ( data.success ) {
+                    var successMsg = 'new inventory added successfully';
+                console.log( successMsg );
+                welcome.innerHTML = successMsg + '<br>';
+                } else if ( data.error ) {
+                    welcome.innerHTML = "error";
+                    console.log( data.error );
+                }
+                } else {
+                // handle error
+                console.error(this.statusText);
+                }
+            };
+                httpReq.open("POST", "/addinventory");
+                httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                httpReq.send(newInventoryJSON);
+            }
+          </script>
+
+        <div class="textCenter" id="02"><p id="p02">
+        </p></div>
+        <div class="center"><br>
+        <p class="textCenter">Enter part number or item description:</p> <br><input id="inp01" type="text"><br><br>
+        <p class="textCenter">Enter a quantity: </p><br><input id="inp02" type="text"><br><br>
+        <button class="button" id="btn01" onclick="sqlRequest()">Add to Inventory</button>
+        <br><br>
+        </div>
+    </body>
+</html>

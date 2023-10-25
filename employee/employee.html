@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="employee.css">
+  <script src="passwords.js">
+  </script>
+  <div>
+    <title>Employee Selection Page</title>
+    <h1 class="textCenter">
+     Hello Employee,
+    </h1>
+    <h2 class="textCenter">
+      Which Page Would you like to visit today
+    </h2>
+  </div>
+</head>
+<body style="background-color: #F0F8FF">
+
+<div id="form2" class="form">
+  <form id="employeeForm" action="/redirect" enctype="application/x-www-form-urlencoded" method="post">
+    <label for="role">if employee, select role:</label>
+    <select id="role" name="role">
+      <option value="shipping">shipping</option>
+      <option value="receiving">receiving</option>
+      <option value="admin">admin</option>
+    </select><br>
+
+
+
+    <input class="button" type="submit" value="Submit">
+  </form>
+</div>
+
+<script>
+    document.getElementById("employeeForm").addEventListener("submit", function(event) {
+      event.preventDefault(); // Prevent the form from submitting by default
+      var selectedRole = document.getElementById("role").value;
+      if (selectedRole === "shipping") {
+        var correctPass = passWords.shippingPassword;
+        var shipPass = prompt('Please Enter Shipping Password: ');
+        if(shipPass == correctPass)
+        {
+        //The user has successfully authenticated. We need to store this information
+        //for the next page.
+        sessionStorage.setItem("AuthenticatedS", "Authenticated");       
+        window.location.href = "/employee/shipping.html";
+        }
+        else{
+          alert("Wrong Password To Enter Shipping");
+        }
+      } else if (selectedRole === "receiving") { // Removed the extra forward slash here
+        var correctPass = passWords.receivingPassword;
+        var recePass = prompt('Please Enter Receiving Password: ');
+        if (recePass == correctPass)
+        {
+        sessionStorage.setItem("AuthenticatedR", "Authenticated");       
+        window.location.href = "/employee/receiving.html";
+        }
+        else{
+          alert("Wrong Password To Enter Receiving");
+        }
+      } else if (selectedRole === "admin") {
+        var correctPass = passWords.adminPassword;
+        var admiPass = prompt('Please Enter Admin Password: ');
+        if (admiPass == correctPass)
+        {
+        sessionStorage.setItem("AuthenticatedA", "Authenticated");       
+        window.location.href = "/employee/admin.html";
+      }
+      else{
+        alert("Wrong Password To Enter Admin");
+      }
+    }
+    });
+  </script>

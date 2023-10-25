@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="employee.css">
+        <title>Admin</title>
+        <script>
+            //check if user is authenticated 
+            if (sessionStorage.getItem('AuthenticatedA') === null) {
+              window.location.href = "denied.html";
+            }
+            else {
+            //The user is authenticated
+            alert("password is valid")
+            }
+          </script>
+    </head>
+    <body style="background-color: #F0F8FF">
+        <h2 class="textCenter">Admin View</h2><br><br>
+
+        <h2 class="textCenter">Search Orders</h2><br>
+        <div class="textCenter" id="03"><p id="p03">
+        </p></div>
+        <div class="center">
+            <p class="textCenter">Search by status ("authorized" / "unauthorized" or "shipped" / "not shipped"): </p><br><input id="input01" type="text"><br><br>
+            <button class="button" id="btn02" onclick="retrieveOrders1()">Display Orders</button><br>
+            <br><br>
+            <p class="textCenter">Search by price range (enter dollar amounts): </p><br>Minimum: <input id="input02" type="text"><br><br>
+            Maximum: <input id="input03" type="text"><br><br>
+            <button class="button" id="btn03" onclick="retrieveOrders2()">Display Orders</button><br>
+            <br><br>
+            <p class="textCenter">Search by date range (enter in format YYYY-MM-DD): </p><br>Start: <input id="input04" type="text"><br><br>
+            End: <input id="input05" type="text"><br><br>
+            <button class="button" id="btn04" onclick="retrieveOrders3()">Display Orders</button><br><br>
+        </div>
+
+        <br>
+        <script>
+            function sqlRequest() {
+                var txtBox1 = document.getElementById('inp01');
+                var txtBox2 = document.getElementById('inp02');
+                var txtBox3 = document.getElementById('inp03');
+                var minweight = txtBox1.value; 
+                var maxweight = txtBox2.value; 
+                var charge = txtBox3.value;
+                const newBracketFee = { minimum: minweight, maximum: maxweight, fee: charge }; 
+                const newBracketFeeJSON = JSON.stringify(newBracketFee);
+
+                const test = document.getElementById('p02');
+                test.innerHTML = "Weight Bracket and Fee Added";
+
+                const httpReq = new XMLHttpRequest();
+                httpReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                // parse the response data
+                const data = JSON.parse(this.responseText);
+
+                const welcome = document.getElementById('01');
+                if ( data.success ) {
+                    var successMsg = 'new weight bracket and fee added successfully';
+                console.log( successMsg );
+                welcome.innerHTML = successMsg + '<br>';
+                } else if ( data.error ) {
+                    welcome.innerHTML = "error";
+                    console.log( data.error );
+                }
+                } else {
+                // handle error
+                console.error(this.statusText);
+                }
+            };
+                httpReq.open("POST", "/addbracketfee");
+                httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                httpReq.send(newBracketFeeJSON);
+            }
+
+            // Status Search
+            function retrieveOrders1() {
+                var txtBox1 = document.getElementById('input01');
+                // var txtBox2 = document.getElementById('input02');
+                // var txtBox3 = document.getElementById('input03');
+                var searchstatus = txtBox1.value; //numordescr
+                // var maxweight = txtBox2.value; //qty
+                // var charge = txtBox3.value;
+                const newStatusSearch = { search: searchstatus }; // newInventory, search: numordescr, quantity: qty
+                const newStatusSearchJSON = JSON.stringify(newStatusSearch);
+
+                const test = document.getElementById('p03');
+                test.innerHTML = "Search Completed Successfully";
+
+
+                const httpReq = new XMLHttpRequest();
+                httpReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                // parse the response data
+                const data = JSON.parse(this.responseText);
+                console.log(data);
+                console.log(data[0].Customer);
+                // Create a table element
+                var table = document.createElement("table");
+                var ordHeader = ["OrderNum", "Customer", "Shipped", "Items", "Wt", "Subtotal", "Discount", "Fee", "Total", "PaymentReceived", "PaymentID", "TimePlaced"];
+                var thead = document.createElement('thead');
+                thead.setAttribute("id","thead");
+                thead.setAttribute("class", "thead");
+
+                table.appendChild(thead);
+
+            for (var i=0; i<ordHeader.length; i++) {
+                thead.appendChild(document.createElement("th")).
+                appendChild(document.createTextNode(ordHeader[i]));
+            }
+
+                // Loop through the data and create table rows and cells
+                for (var i = 0; i < data.length; i++) {
+                    var row = document.createElement("tr");
+                    // link a submission button to each order 
+                    var submit = document.createElement("button");
+                    // should set the OrderNum of the JSON object as the request data
+                    submit.setAttribute( "id", data[i].OrderNum);
+
+
+                    for (var key in data[i] ) {
+                    var cell = document.createElement("td");
+                    cell.textContent =  data[i][key] ;
+                    cell.style.border="1px solid green";
+                    row.appendChild(cell);
+                    }
+                    // row.appendChild(submit);
+                    table.appendChild(row);
+                }
+
+                // Append the table to the HTML document,
+                // remove and replace any data that was previously there
+                let tableHTML = document.getElementById('table');
+                // if data has already been displayed in the table element
+                // remove the child of the table element (the <table>)
+                if ( tableHTML.firstElementChild ) {
+                    tableHTML.removeChild(tableHTML.firstElementChild);
+                }
+                // put the <table> and data into the <div id='table'> element
+                document.getElementById('table').appendChild(table);
+                }
+            };
+                httpReq.open("POST", "/displayorders1");
+                httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                httpReq.send(newStatusSearchJSON);
+            }
+
+            // Price Range Search
+            function retrieveOrders2() {
+                var txtBox1 = document.getElementById('input02');
+                var txtBox2 = document.getElementById('input03');
+                var minprice = txtBox1.value; 
+                var maxprice = txtBox2.value; 
+
+                const newPriceSearch = { min: minprice, max: maxprice };
+                const newPriceSearchJSON = JSON.stringify(newPriceSearch);
+
+                const test = document.getElementById('p03');
+                test.innerHTML = "Search Completed Successfully";
+
+
+                const httpReq = new XMLHttpRequest();
+                httpReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                // parse the response data
+                const data = JSON.parse(this.responseText);
+                console.log(data);
+                console.log(data[0].Customer);
+                // Create a table element
+                var table = document.createElement("table");
+
+
+                var ordHeader2 = ["OrderNum", "Customer", "Shipped", "Items", "Wt", "Subtotal", "Discount", "Fee", "Total", "PaymentReceived", "PaymentID", "TimePlaced"];
+                var thead2 = document.createElement('thead');
+                thead2.setAttribute("id","thead");
+                thead2.setAttribute("class", "thead");
+
+                table.appendChild(thead2);
+
+            for (var i=0; i<ordHeader2.length; i++) {
+                thead2.appendChild(document.createElement("th")).
+                appendChild(document.createTextNode(ordHeader2[i]));
+            }
+
+                // Loop through the data and create table rows and cells
+                for (var i = 0; i < data.length; i++) {
+                    var row = document.createElement("tr");
+                    // link a submission button to each order 
+                    var submit = document.createElement("button");
+                    // should set the OrderNum of the JSON object as the request data
+                    submit.setAttribute( "id", data[i].OrderNum);
+
+
+                    for (var key in data[i] ) {
+                    var cell = document.createElement("td");
+                    cell.textContent =  data[i][key] ;
+                    cell.style.border="1px solid green";
+                    row.appendChild(cell);
+                    }
+                    // row.appendChild(submit);
+                    table.appendChild(row);
+                }
+
+                // Append the table to the HTML document,
+                // remove and replace any data that was previously there
+                let tableHTML = document.getElementById('table');
+                // if data has already been displayed in the table element
+                // remove the child of the table element (the <table>)
+                if ( tableHTML.firstElementChild ) {
+                    tableHTML.removeChild(tableHTML.firstElementChild);
+                }
+                // put the <table> and data into the <div id='table'> element
+                document.getElementById('table').appendChild(table);
+                }
+            };
+                httpReq.open("POST", "/displayorders2");
+                httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                httpReq.send(newPriceSearchJSON);
+            }
+
+            // Date Range Search
+            function retrieveOrders3() {
+                var txtBox1 = document.getElementById('input04');
+                var txtBox2 = document.getElementById('input05');
+                var startdate = txtBox1.value; 
+                var enddate = txtBox2.value; 
+
+                const newDateSearch = { start: startdate, end: enddate };
+                const newDateSearchJSON = JSON.stringify(newDateSearch);
+
+                const test = document.getElementById('p03');
+                test.innerHTML = "Search Completed Successfully";
+
+
+                const httpReq = new XMLHttpRequest();
+                httpReq.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                // parse the response data
+                const data = JSON.parse(this.responseText);
+                console.log(data);
+                console.log(data[0].Customer);
+                // Create a table element
+                var table = document.createElement("table");
+
+
+                var ordHeader3 = ["OrderNum", "Customer", "Shipped", "Items", "Wt", "Subtotal", "Discount", "Fee", "Total", "PaymentReceived", "PaymentID", "TimePlaced"];
+                var thead3 = document.createElement('thead');
+                thead3.setAttribute("id","thead");
+                thead3.setAttribute("class", "thead");
+
+                table.appendChild(thead3);
+
+            for (var i=0; i<ordHeader3.length; i++) {
+                thead3.appendChild(document.createElement("th")).
+                appendChild(document.createTextNode(ordHeader3[i]));
+            }
+
+                // Loop through the data and create table rows and cells
+                for (var i = 0; i < data.length; i++) {
+                    var row = document.createElement("tr");
+                    // link a submission button to each order 
+                    var submit = document.createElement("button");
+                    // should set the OrderNum of the JSON object as the request data
+                    submit.setAttribute( "id", data[i].OrderNum);
+
+
+                    for (var key in data[i] ) {
+                    var cell = document.createElement("td");
+                    cell.textContent =  data[i][key] ;
+                    cell.style.border="1px solid green";
+                    row.appendChild(cell);
+                    }
+                    // row.appendChild(submit);
+                    table.appendChild(row);
+                }
+
+                // Append the table to the HTML document,
+                // remove and replace any data that was previously there
+                let tableHTML = document.getElementById('table');
+                // if data has already been displayed in the table element
+                // remove the child of the table element (the <table>)
+                if ( tableHTML.firstElementChild ) {
+                    tableHTML.removeChild(tableHTML.firstElementChild);
+                }
+                // put the <table> and data into the <div id='table'> element
+                document.getElementById('table').appendChild(table);
+                }
+            };
+                httpReq.open("POST", "/displayorders3");
+                httpReq.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                httpReq.send(newDateSearchJSON);
+            }
+        </script>
+
+
+        <br> 
+        <div id="table">
+        </div>
+
+        <br><br>
+        <h2 class="textCenter">Set Fees by Weight Bracket</h2><br>
+        <div class="textCenter" id="02"><p id="p02">
+        </p></div>
+        <div class="center">
+            <p class="textCenter">Enter minimum weight for the bracket: </p><br><input id="inp01" type="text"><br><br>
+            <p class="textCenter">Enter maximum weight for the bracket: </p><br><input id="inp02" type="text"><br><br>
+            <p class="textCenter">Enter fee amount: </p><br><input id="inp03" type="text"><br><br>
+            <button class="button" id="btn01" onclick="sqlRequest()">Update weight bracket and fee</button><br>
+            <br>
+        </div>
+
+    </body>
+</html>
